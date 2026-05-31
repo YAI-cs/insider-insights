@@ -5,13 +5,14 @@ const AUTH_COOKIE = "better-auth.session_token"
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthRoute = pathname === "/sign-in" || pathname === "/sign-up"
+  const isLandingPage = pathname === "/"
   const hasSession = request.cookies.has(AUTH_COOKIE)
 
   if (isAuthRoute && hasSession) {
-    return NextResponse.redirect(new URL("/", request.url))
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
-  if (!isAuthRoute && !hasSession) {
+  if (!isLandingPage && !isAuthRoute && !hasSession) {
     return NextResponse.redirect(new URL("/sign-in", request.url))
   }
 

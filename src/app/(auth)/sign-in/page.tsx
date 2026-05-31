@@ -22,7 +22,7 @@ export default function SignInPage() {
     const { error: authError } = await authClient.signIn.email({
       email,
       password,
-      callbackURL: "/",
+      callbackURL: "/dashboard",
     })
 
     if (authError) {
@@ -31,7 +31,7 @@ export default function SignInPage() {
       return
     }
 
-    router.push("/")
+    router.push("/dashboard")
     router.refresh()
   }
 

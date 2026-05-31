@@ -24,7 +24,7 @@ export default function SignUpPage() {
       name,
       email,
       password,
-      callbackURL: "/",
+      callbackURL: "/dashboard",
     })
 
     if (authError) {
@@ -33,7 +33,7 @@ export default function SignUpPage() {
       return
     }
 
-    router.push("/")
+    router.push("/dashboard")
     router.refresh()
   }
 
