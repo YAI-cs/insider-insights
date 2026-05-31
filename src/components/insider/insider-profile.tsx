@@ -5,10 +5,6 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Sun, Moon } from "lucide-react"
 import {
-  insiders,
-  trades,
-  insiderNews,
-  marketEvents,
   INSIDER_COLORS,
   formatDate,
   formatNotional,
@@ -16,6 +12,7 @@ import {
   type Trade,
   type TradeType,
   type InsiderNewsItem,
+  type MarketEvent,
 } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import InsiderInsightsLogo from "@/components/logo"
@@ -84,7 +81,6 @@ function ReturnBadge({ pct }: { pct: number }) {
   )
 }
 
-// Mini sparkline of trade positions over time
 function TradeSparkline({ trades, color }: { trades: Trade[]; color: string }) {
   const sorted = [...trades].sort((a, b) => a.date.localeCompare(b.date))
   if (sorted.length < 2) return null
@@ -108,8 +104,6 @@ function TradeSparkline({ trades, color }: { trades: Trade[]; color: string }) {
   }
 
   const points = sorted.map((t) => `${x(t.date)},${y(t.returnPct)}`).join(" ")
-
-  // Zero line position
   const zeroY = y(0)
 
   return (
@@ -126,27 +120,19 @@ function TradeSparkline({ trades, color }: { trades: Trade[]; color: string }) {
 type SortKey = keyof Trade
 type SortDir = "asc" | "desc"
 
-export function InsiderProfile({ id }: { id: string }) {
-  const insider = insiders.find((i) => i.id === id)
+type Props = {
+  insider: Insider
+  trades: Trade[]
+  news: InsiderNewsItem[]
+  marketEvents: MarketEvent[]
+}
+
+export function InsiderProfile({ insider, trades: insiderTrades, news, marketEvents }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("date")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
   const { resolvedTheme, setTheme } = useTheme()
 
-  if (!insider) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background font-mono text-muted-foreground text-sm">
-        Insider not found.{" "}
-        <Link href="/" className="ml-2 text-primary hover:underline">
-          ← Back
-        </Link>
-      </div>
-    )
-  }
-
-  const insiderTrades = trades.filter((t) => t.insiderId === id)
-  const news = [...insiderNews]
-    .filter((n) => n.insiderId === id)
-    .sort((a, b) => b.date.localeCompare(a.date))
+  const sortedNews = [...news].sort((a, b) => b.date.localeCompare(a.date))
 
   const totalNotional = insiderTrades.reduce((s, t) => s + t.notional, 0)
   const avgEdge = insider.estimatedEdge
@@ -158,14 +144,13 @@ export function InsiderProfile({ id }: { id: string }) {
       ? Math.round((insiderTrades.filter((t) => t.returnPct > 0).length / insiderTrades.length) * 100)
       : 0
 
-  const color = INSIDER_COLORS[id] ?? "var(--color-primary)"
+  const color = INSIDER_COLORS[insider.id] ?? "var(--color-primary)"
   const initials = insider.name
     .split(" ")
     .slice(0, 2)
     .map((w) => w[0])
     .join("")
 
-  // Sort trades
   const sortedTrades = [...insiderTrades].sort((a, b) => {
     const dir = sortDir === "asc" ? 1 : -1
     const av = a[sortKey]
@@ -201,11 +186,12 @@ export function InsiderProfile({ id }: { id: string }) {
 
   const relevantEvents = marketEvents
     .filter((e) => {
+      const id = insider.id
       if (id === "trump") return ["announcement", "political"].includes(e.category)
       if (id === "pelosi") return ["earnings", "announcement"].includes(e.category)
       if (id === "musk") return ["earnings", "announcement", "policy"].includes(e.category)
       if (id === "rfk") return ["policy", "announcement"].includes(e.category)
-      return false
+      return true
     })
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
@@ -242,7 +228,6 @@ export function InsiderProfile({ id }: { id: string }) {
         {/* Profile hero */}
         <section aria-label="Profile overview" className="border-b border-border px-6 py-4 shrink-0">
           <div className="flex items-start gap-5">
-            {/* Avatar */}
             <div
               className="w-14 h-14 flex items-center justify-center text-xl font-bold shrink-0 border border-border/60"
               style={{ backgroundColor: `${color}14`, color }}
@@ -250,7 +235,6 @@ export function InsiderProfile({ id }: { id: string }) {
               {initials}
             </div>
 
-            {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-lg font-bold text-foreground tracking-tight leading-none">
@@ -275,7 +259,6 @@ export function InsiderProfile({ id }: { id: string }) {
               </div>
             </div>
 
-            {/* Sparkline */}
             <div className="w-72 shrink-0 hidden lg:block">
               <div className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-wide mb-1.5">
                 Trade returns
@@ -315,13 +298,12 @@ export function InsiderProfile({ id }: { id: string }) {
 
         {/* Main two-pane body */}
         <main className="flex-1 flex overflow-hidden min-h-0">
-          {/* Left sidebar: trade stats + related events */}
+          {/* Left sidebar — no border-r here; the separator div below draws the vertical line so border-b lines form clean T-junctions */}
           <div
-            className="border-r border-border shrink-0 flex flex-col overflow-hidden"
+            className="shrink-0 flex flex-col overflow-hidden"
             style={{ width: "22%", minWidth: 200, maxWidth: 280 }}
           >
-            {/* Stats */}
-            <div className="px-4 py-4 border-b border-border shrink-0">
+            <div className="px-4 py-4 border-b border-border shrink-0 flex items-center">
               <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-muted-foreground">
                 Overview
               </span>
@@ -348,20 +330,21 @@ export function InsiderProfile({ id }: { id: string }) {
                   {[...new Set(insiderTrades.map((t) => t.ticker))].join(", ")}
                 </div>
               </div>
-              <div>
-                <div className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-wide mb-1">
-                  Largest Trade
+              {insiderTrades.length > 0 && (
+                <div>
+                  <div className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-wide mb-1">
+                    Largest Trade
+                  </div>
+                  <div className="font-mono text-lg font-bold text-foreground">
+                    {formatNotional(Math.max(...insiderTrades.map((t) => t.notional)))}
+                  </div>
                 </div>
-                <div className="font-mono text-lg font-bold text-foreground">
-                  {formatNotional(Math.max(...insiderTrades.map((t) => t.notional)))}
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Related events */}
             {relevantEvents.length > 0 && (
               <>
-                <div className="px-4 py-4 border-b border-border shrink-0">
+                <div className="px-4 py-4 border-b border-border shrink-0 flex items-center">
                   <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-muted-foreground">
                     Related Events
                   </span>
@@ -391,20 +374,22 @@ export function InsiderProfile({ id }: { id: string }) {
             )}
           </div>
 
+          {/* Vertical separator — drawn as its own element so border-b lines on both sides form unbroken T-junctions */}
+          <div className="w-px bg-border shrink-0" />
+
           {/* Right: news feed + trade history */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-            {/* News feed — prominent */}
             <section aria-label="News feed" className="flex flex-col border-b border-border" style={{ height: "44%" }}>
               <div className="px-4 py-4 border-b border-border flex items-center justify-between shrink-0">
                 <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-muted-foreground">
                   News Feed
                 </span>
                 <span className="font-mono text-[11px] text-muted-foreground/70">
-                  {news.length} items
+                  {sortedNews.length} items
                 </span>
               </div>
               <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 content-start" tabIndex={0}>
-                {news.map((item) => (
+                {sortedNews.map((item) => (
                   <div
                     key={item.id}
                     className="px-4 py-3 border-b border-r border-border/50 hover:bg-accent/40 transition-colors duration-75"
@@ -433,7 +418,6 @@ export function InsiderProfile({ id }: { id: string }) {
               </div>
             </section>
 
-            {/* Trade history */}
             <section aria-label="Trade history" className="flex-1 flex flex-col overflow-hidden min-w-0">
               <div className="px-4 py-4 border-b border-border flex items-center justify-between shrink-0">
                 <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-muted-foreground">
@@ -513,13 +497,12 @@ export function InsiderProfile({ id }: { id: string }) {
         </main>
       </div>
 
-      {/* Footer */}
       <footer className="h-7 border-t border-border bg-background flex items-center px-4 shrink-0">
         <div className="flex items-center gap-4 font-mono text-[10px] text-muted-foreground/80 tracking-wide w-full">
           <span className="text-primary font-bold tracking-[0.12em]">INSIDER INSIGHTS</span>
           <span className="text-muted-foreground/50">·</span>
-          <span className="text-muted-foreground/60">Mock data — not investment advice</span>
-          <span className="ml-auto text-muted-foreground/40">v0.1.0-demo</span>
+          <span className="text-muted-foreground/60">AI-enriched data — not investment advice</span>
+          <span className="ml-auto text-muted-foreground/40">v0.2.0</span>
         </div>
       </footer>
     </div>
