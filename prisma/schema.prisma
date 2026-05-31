@@ -74,3 +74,61 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+model Insider {
+  id            String        @id
+  name          String
+  title         String
+  affiliation   String
+  party         String
+  tradeCount    Int
+  lastTradeDate DateTime
+  estimatedEdge Float
+  trades        Trade[]
+  news          InsiderNews[]
+  updatedAt     DateTime      @updatedAt
+
+  @@map("insider")
+}
+
+model Trade {
+  id             String   @id @default(cuid())
+  insiderId      String
+  insider        Insider  @relation(fields: [insiderId], references: [id], onDelete: Cascade)
+  date           DateTime
+  disclosureDate DateTime
+  ticker         String
+  company        String
+  type           String
+  notional       Float
+  disclosureLag  Int
+  priceAtTrade   Float
+  priceNow       Float
+  returnPct      Float
+  updatedAt      DateTime @updatedAt
+
+  @@index([insiderId])
+  @@map("trade")
+}
+
+model MarketEvent {
+  id       String   @id @default(cuid())
+  date     DateTime
+  label    String
+  category String
+
+  @@map("market_event")
+}
+
+model InsiderNews {
+  id        String   @id @default(cuid())
+  insiderId String
+  insider   Insider  @relation(fields: [insiderId], references: [id], onDelete: Cascade)
+  date      DateTime
+  headline  String
+  source    String
+  category  String
+
+  @@index([insiderId])
+  @@map("insider_news")
+}
