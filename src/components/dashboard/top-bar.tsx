@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
-import { Sun, Moon } from "lucide-react"
+import { Sun, Moon, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { type TradeType } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
@@ -17,6 +17,8 @@ import InsiderInsightsLogo from "@/components/logo"
 type Props = {
   typeFilter: TradeType | "ALL"
   onTypeFilterChange: (type: TradeType | "ALL") => void
+  onRefresh?: () => Promise<void>
+  isRefreshing?: boolean
 }
 
 const FILTER_META: Record<
@@ -57,7 +59,7 @@ const FILTER_META: Record<
 
 const TYPES: (TradeType | "ALL")[] = ["ALL", "BUY", "SELL", "CALL", "PUT"]
 
-export function TopBar({ typeFilter, onTypeFilterChange }: Props) {
+export function TopBar({ typeFilter, onTypeFilterChange, onRefresh, isRefreshing }: Props) {
   const { resolvedTheme, setTheme } = useTheme()
   const router = useRouter()
   const { data: session } = authClient.useSession()
@@ -123,6 +125,25 @@ export function TopBar({ typeFilter, onTypeFilterChange }: Props) {
       </div>
 
       <div className="flex items-center gap-4 text-[12px] font-mono text-muted-foreground tracking-wide justify-end">
+        {onRefresh && (
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-foreground transition-colors duration-100 disabled:opacity-40"
+                aria-label="Refresh data from AI pipeline"
+              >
+                <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={8} className="py-2 px-3">
+              <div className="font-mono text-[11px]">
+                {isRefreshing ? "Fetching live data…" : "Refresh from AI pipeline"}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
         <button
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           className="flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-foreground transition-colors duration-100"

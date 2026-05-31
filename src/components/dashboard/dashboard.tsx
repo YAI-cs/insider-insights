@@ -1,29 +1,37 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { TopBar } from "./top-bar"
 import { InsiderLeaderboard } from "./insider-leaderboard"
 import { TradeTimeline } from "./trade-timeline"
 import { TradeTable } from "./trade-table"
 import {
-  insiders,
-  trades,
-  marketEvents,
   type TradeType,
   type Trade,
+  type Insider,
+  type MarketEvent,
 } from "@/lib/mock-data"
 
 type SortConfig = { column: keyof Trade; direction: "asc" | "desc" }
 
-export function Dashboard() {
+type Props = {
+  insiders: Insider[]
+  trades: Trade[]
+  marketEvents: MarketEvent[]
+}
+
+export function Dashboard({ insiders, trades, marketEvents }: Props) {
+  const router = useRouter()
   const [selectedInsiderId, setSelectedInsiderId] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<TradeType | "ALL">("ALL")
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "date", direction: "desc" })
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const filteredTrades = useMemo(() => {
     if (typeFilter === "ALL") return trades
     return trades.filter((t) => t.type === typeFilter)
-  }, [typeFilter])
+  }, [typeFilter, trades])
 
   const tableData = useMemo(() => {
     if (!selectedInsiderId) return filteredTrades
@@ -38,9 +46,28 @@ export function Dashboard() {
     )
   }
 
+  async function handleRefresh() {
+    setIsRefreshing(true)
+    try {
+      const res = await fetch("/api/data/refresh", { method: "POST" })
+      if (res.ok) {
+        router.refresh()
+      }
+    } catch {
+      // Silently fail — user can retry
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-mono">
-      <TopBar typeFilter={typeFilter} onTypeFilterChange={setTypeFilter} />
+      <TopBar
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+      />
 
       {/* Main body: sidebar + content */}
       <main className="flex flex-1 overflow-hidden min-h-0">
@@ -85,8 +112,8 @@ export function Dashboard() {
           <span aria-hidden="true" className="text-muted-foreground/40">·</span>
           <span>EDGAR (Form 4) · STOCK Act Disclosures · Congress.gov</span>
           <span aria-hidden="true" className="text-muted-foreground/40">·</span>
-          <span>Mock data for demonstration only. Not investment advice.</span>
-          <span className="ml-auto">v0.1.0-demo</span>
+          <span>AI-enriched data. Not investment advice.</span>
+          <span className="ml-auto">v0.2.0</span>
         </div>
       </footer>
     </div>
