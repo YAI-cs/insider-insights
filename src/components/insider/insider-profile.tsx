@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useTheme } from "next-themes"
-import { Sun, Moon } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 import {
   INSIDER_COLORS,
   formatDate,
@@ -13,164 +13,220 @@ import {
   type TradeType,
   type InsiderNewsItem,
   type MarketEvent,
-} from "@/lib/mock-data"
-import { cn } from "@/lib/utils"
-import InsiderInsightsLogo from "@/components/logo"
+} from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+import InsiderInsightsLogo from "@/components/logo";
 
 const PARTY_COLORS: Record<string, string> = {
   R: "text-red-400 bg-red-400/10 border-red-400/20",
   D: "text-blue-400 bg-blue-400/10 border-blue-400/20",
   I: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
   N: "text-muted-foreground bg-muted border-border",
-}
+};
 
 const PARTY_LABEL: Record<string, string> = {
   R: "Republican",
   D: "Democrat",
   I: "Independent",
   N: "Non-partisan",
-}
+};
 
 const MARK_SYMBOLS: Record<TradeType, string> = {
   BUY: "▲",
   SELL: "▽",
   CALL: "◆",
   PUT: "◇",
-}
+};
 
 const NEWS_CAT_COLORS: Record<InsiderNewsItem["category"], string> = {
   trade: "text-primary bg-primary/8 border-primary/20",
   political: "text-chart-5 bg-chart-5/8 border-chart-5/20",
   market: "text-chart-1 bg-chart-1/8 border-chart-1/20",
   regulatory: "text-chart-2 bg-chart-2/8 border-chart-2/20",
-}
+};
 
 const NEWS_CAT_LABELS: Record<InsiderNewsItem["category"], string> = {
   trade: "TRADE",
   political: "POLITICAL",
   market: "MARKET",
   regulatory: "REGULATORY",
-}
+};
 
 function TypeBadge({ type }: { type: TradeType }) {
-  const isUp = type === "BUY" || type === "CALL"
+  const isUp = type === "BUY" || type === "CALL";
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-mono font-bold tracking-wide",
-        isUp ? "text-chart-1 bg-chart-1/10" : "text-chart-2 bg-chart-2/10"
+        isUp ? "text-chart-1 bg-chart-1/10" : "text-chart-2 bg-chart-2/10",
       )}
     >
       <span className="text-[10px]">{MARK_SYMBOLS[type]}</span>
       {type}
     </span>
-  )
+  );
 }
 
 function LagBadge({ lag }: { lag: number }) {
-  const color = lag > 30 ? "text-chart-2" : lag > 10 ? "text-primary" : "text-chart-1"
-  return <span className={cn("font-mono tabular-nums text-[12px]", color)}>{lag}d</span>
+  const color =
+    lag > 30 ? "text-chart-2" : lag > 10 ? "text-primary" : "text-chart-1";
+  return (
+    <span className={cn("font-mono tabular-nums text-[12px]", color)}>
+      {lag}d
+    </span>
+  );
 }
 
 function ReturnBadge({ pct }: { pct: number }) {
-  const pos = pct >= 0
+  const pos = pct >= 0;
   return (
-    <span className={cn("font-mono tabular-nums font-semibold text-[12px]", pos ? "text-chart-1" : "text-chart-2")}>
-      {pos ? "+" : ""}{pct.toFixed(1)}%
+    <span
+      className={cn(
+        "font-mono tabular-nums font-semibold text-[12px]",
+        pos ? "text-chart-1" : "text-chart-2",
+      )}
+    >
+      {pos ? "+" : ""}
+      {pct.toFixed(1)}%
     </span>
-  )
+  );
 }
 
 function TradeSparkline({ trades, color }: { trades: Trade[]; color: string }) {
-  const sorted = [...trades].sort((a, b) => a.date.localeCompare(b.date))
-  if (sorted.length < 2) return null
+  const sorted = [...trades].sort((a, b) => a.date.localeCompare(b.date));
+  if (sorted.length < 2) return null;
 
-  const START = new Date("2024-01-01").getTime()
-  const END = new Date("2026-01-01").getTime()
-  const RANGE = END - START
+  const START = new Date("2024-01-01").getTime();
+  const END = new Date("2026-01-01").getTime();
+  const RANGE = END - START;
 
-  const W = 320
-  const H = 48
+  const W = 320;
+  const H = 48;
 
-  const Y_MIN = Math.min(...sorted.map((t) => t.returnPct)) - 10
-  const Y_MAX = Math.max(...sorted.map((t) => t.returnPct)) + 10
-  const Y_RANGE = Y_MAX - Y_MIN
+  const Y_MIN = Math.min(...sorted.map((t) => t.returnPct)) - 10;
+  const Y_MAX = Math.max(...sorted.map((t) => t.returnPct)) + 10;
+  const Y_RANGE = Y_MAX - Y_MIN;
 
   function x(d: string) {
-    return ((new Date(d).getTime() - START) / RANGE) * W
+    return ((new Date(d).getTime() - START) / RANGE) * W;
   }
   function y(pct: number) {
-    return H - ((pct - Y_MIN) / Y_RANGE) * H
+    return H - ((pct - Y_MIN) / Y_RANGE) * H;
   }
 
-  const points = sorted.map((t) => `${x(t.date)},${y(t.returnPct)}`).join(" ")
-  const zeroY = y(0)
+  const points = sorted.map((t) => `${x(t.date)},${y(t.returnPct)}`).join(" ");
+  const zeroY = y(0);
 
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none">
-      <line x1={0} y1={zeroY} x2={W} y2={zeroY} stroke="currentColor" strokeWidth={0.5} strokeDasharray="3,3" className="text-muted-foreground/25" />
-      <polyline fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" points={points} opacity={0.7} />
+    <svg
+      width={W}
+      height={H}
+      viewBox={`0 0 ${W} ${H}`}
+      className="w-full"
+      preserveAspectRatio="none"
+    >
+      <line
+        x1={0}
+        y1={zeroY}
+        x2={W}
+        y2={zeroY}
+        stroke="currentColor"
+        strokeWidth={0.5}
+        strokeDasharray="3,3"
+        className="text-muted-foreground/25"
+      />
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        points={points}
+        opacity={0.7}
+      />
       {sorted.map((t) => (
-        <circle key={t.id} cx={x(t.date)} cy={y(t.returnPct)} r={3} fill={color} opacity={0.9} />
+        <circle
+          key={t.id}
+          cx={x(t.date)}
+          cy={y(t.returnPct)}
+          r={3}
+          fill={color}
+          opacity={0.9}
+        />
       ))}
     </svg>
-  )
+  );
 }
 
-type SortKey = keyof Trade
-type SortDir = "asc" | "desc"
+type SortKey = keyof Trade;
+type SortDir = "asc" | "desc";
 
 type Props = {
-  insider: Insider
-  trades: Trade[]
-  news: InsiderNewsItem[]
-  marketEvents: MarketEvent[]
-}
+  insider: Insider;
+  trades: Trade[];
+  news: InsiderNewsItem[];
+  marketEvents: MarketEvent[];
+};
 
-export function InsiderProfile({ insider, trades: insiderTrades, news, marketEvents }: Props) {
-  const [sortKey, setSortKey] = useState<SortKey>("date")
-  const [sortDir, setSortDir] = useState<SortDir>("desc")
-  const { resolvedTheme, setTheme } = useTheme()
+export function InsiderProfile({
+  insider,
+  trades: insiderTrades,
+  news,
+  marketEvents,
+}: Props) {
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const { resolvedTheme, setTheme } = useTheme();
 
-  const sortedNews = [...news].sort((a, b) => b.date.localeCompare(a.date))
+  const sortedNews = [...news].sort((a, b) => b.date.localeCompare(a.date));
 
-  const totalNotional = insiderTrades.reduce((s, t) => s + t.notional, 0)
-  const avgEdge = insider.estimatedEdge
+  const totalNotional = insiderTrades.reduce((s, t) => s + t.notional, 0);
+  const avgEdge = insider.estimatedEdge;
   const avgLag = insiderTrades.length
-    ? Math.round(insiderTrades.reduce((s, t) => s + t.disclosureLag, 0) / insiderTrades.length)
-    : 0
-  const winRate =
-    insiderTrades.length
-      ? Math.round((insiderTrades.filter((t) => t.returnPct > 0).length / insiderTrades.length) * 100)
-      : 0
+    ? Math.round(
+        insiderTrades.reduce((s, t) => s + t.disclosureLag, 0) /
+          insiderTrades.length,
+      )
+    : 0;
+  const winRate = insiderTrades.length
+    ? Math.round(
+        (insiderTrades.filter((t) => t.returnPct > 0).length /
+          insiderTrades.length) *
+          100,
+      )
+    : 0;
 
-  const color = INSIDER_COLORS[insider.id] ?? "var(--color-primary)"
+  const color = INSIDER_COLORS[insider.id] ?? "var(--color-primary)";
   const initials = insider.name
     .split(" ")
     .slice(0, 2)
     .map((w) => w[0])
-    .join("")
+    .join("");
 
   const sortedTrades = [...insiderTrades].sort((a, b) => {
-    const dir = sortDir === "asc" ? 1 : -1
-    const av = a[sortKey]
-    const bv = b[sortKey]
-    if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir
-    return String(av).localeCompare(String(bv)) * dir
-  })
+    const dir = sortDir === "asc" ? 1 : -1;
+    const av = a[sortKey];
+    const bv = b[sortKey];
+    if (typeof av === "number" && typeof bv === "number")
+      return (av - bv) * dir;
+    return String(av).localeCompare(String(bv)) * dir;
+  });
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
-      setSortKey(key)
-      setSortDir("desc")
+      setSortKey(key);
+      setSortDir("desc");
     }
   }
 
   function SortIndicator({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <span className="text-muted-foreground/60 ml-1">↕</span>
-    return <span className="text-primary ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>
+    if (sortKey !== col)
+      return <span className="text-muted-foreground/60 ml-1">↕</span>;
+    return (
+      <span className="text-primary ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>
+    );
   }
 
   const COLS: { key: SortKey; label: string; align: "left" | "right" }[] = [
@@ -182,31 +238,40 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
     { key: "priceAtTrade", label: "Price@Trade", align: "right" },
     { key: "priceNow", label: "Price Now", align: "right" },
     { key: "returnPct", label: "Stock △", align: "right" },
-  ]
+  ];
 
   const relevantEvents = marketEvents
     .filter((e) => {
-      const id = insider.id
-      if (id === "trump") return ["announcement", "political"].includes(e.category)
-      if (id === "pelosi") return ["earnings", "announcement"].includes(e.category)
-      if (id === "musk") return ["earnings", "announcement", "policy"].includes(e.category)
-      if (id === "rfk") return ["policy", "announcement"].includes(e.category)
-      return true
+      const id = insider.id;
+      if (id === "trump")
+        return ["announcement", "political"].includes(e.category);
+      if (id === "pelosi")
+        return ["earnings", "announcement"].includes(e.category);
+      if (id === "musk")
+        return ["earnings", "announcement", "policy"].includes(e.category);
+      if (id === "rfk") return ["policy", "announcement"].includes(e.category);
+      return true;
     })
     .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5)
+    .slice(0, 5);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-mono">
       {/* Top nav */}
-      <nav aria-label="Page navigation" className="h-20 border-b border-border relative flex items-center px-6 shrink-0">
+      <nav
+        aria-label="Page navigation"
+        className="h-20 border-b border-border relative flex items-center px-6 shrink-0"
+      >
         <div className="flex items-center gap-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity duration-100">
+          <Link
+            href="/"
+            className="hover:opacity-80 transition-opacity duration-100"
+          >
             <InsiderInsightsLogo size={0.95} className="text-primary" />
           </Link>
           <div className="h-5 w-px bg-border" />
           <Link
-            href="/"
+            href="/dashboard"
             className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
           >
             <span className="text-[12px]">←</span> Dashboard
@@ -226,7 +291,10 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
 
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         {/* Profile hero */}
-        <section aria-label="Profile overview" className="border-b border-border px-6 py-4 shrink-0">
+        <section
+          aria-label="Profile overview"
+          className="border-b border-border px-6 py-4 shrink-0"
+        >
           <div className="flex items-start gap-5">
             <div
               className="w-14 h-14 flex items-center justify-center text-xl font-bold shrink-0 border border-border/60"
@@ -243,7 +311,7 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
                 <span
                   className={cn(
                     "px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border font-mono",
-                    PARTY_COLORS[insider.party]
+                    PARTY_COLORS[insider.party],
                   )}
                 >
                   {PARTY_LABEL[insider.party]}
@@ -270,12 +338,33 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
           {/* Stats row */}
           <div className="mt-4 grid grid-cols-4 gap-3">
             {[
-              { label: "Total Notional", value: formatNotional(totalNotional), accent: false },
-              { label: "Trades Filed", value: insiderTrades.length, accent: false },
-              { label: "Avg Edge", value: `${avgEdge >= 0 ? "+" : ""}${avgEdge.toFixed(1)}%`, accent: true, positive: avgEdge >= 0 },
-              { label: "Win Rate", value: `${winRate}%`, accent: true, positive: winRate >= 50 },
+              {
+                label: "Total Notional",
+                value: formatNotional(totalNotional),
+                accent: false,
+              },
+              {
+                label: "Trades Filed",
+                value: insiderTrades.length,
+                accent: false,
+              },
+              {
+                label: "Avg Edge",
+                value: `${avgEdge >= 0 ? "+" : ""}${avgEdge.toFixed(1)}%`,
+                accent: true,
+                positive: avgEdge >= 0,
+              },
+              {
+                label: "Win Rate",
+                value: `${winRate}%`,
+                accent: true,
+                positive: winRate >= 50,
+              },
             ].map(({ label, value, accent, positive }) => (
-              <div key={label} className="bg-card border border-border px-3 py-2.5">
+              <div
+                key={label}
+                className="bg-card border border-border px-3 py-2.5"
+              >
                 <div className="font-mono text-[10px] text-muted-foreground/75 uppercase tracking-wide mb-1">
                   {label}
                 </div>
@@ -286,7 +375,7 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
                       ? positive
                         ? "text-chart-1"
                         : "text-chart-2"
-                      : "text-foreground"
+                      : "text-foreground",
                   )}
                 >
                   {value}
@@ -316,7 +405,11 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
                 <div
                   className={cn(
                     "font-mono text-lg font-bold tabular-nums",
-                    avgLag > 30 ? "text-chart-2" : avgLag > 10 ? "text-primary" : "text-chart-1"
+                    avgLag > 30
+                      ? "text-chart-2"
+                      : avgLag > 10
+                        ? "text-primary"
+                        : "text-chart-1",
                   )}
                 >
                   {avgLag} days
@@ -336,7 +429,9 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
                     Largest Trade
                   </div>
                   <div className="font-mono text-lg font-bold text-foreground">
-                    {formatNotional(Math.max(...insiderTrades.map((t) => t.notional)))}
+                    {formatNotional(
+                      Math.max(...insiderTrades.map((t) => t.notional)),
+                    )}
                   </div>
                 </div>
               )}
@@ -379,7 +474,11 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
 
           {/* Right: news feed + trade history */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-            <section aria-label="News feed" className="flex flex-col border-b border-border" style={{ height: "44%" }}>
+            <section
+              aria-label="News feed"
+              className="flex flex-col border-b border-border"
+              style={{ height: "44%" }}
+            >
               <div className="px-4 py-4 border-b border-border flex items-center justify-between shrink-0">
                 <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-muted-foreground">
                   News Feed
@@ -388,7 +487,10 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
                   {sortedNews.length} items
                 </span>
               </div>
-              <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 content-start" tabIndex={0}>
+              <div
+                className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 content-start"
+                tabIndex={0}
+              >
                 {sortedNews.map((item) => (
                   <div
                     key={item.id}
@@ -398,7 +500,7 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
                       <span
                         className={cn(
                           "px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border font-mono",
-                          NEWS_CAT_COLORS[item.category]
+                          NEWS_CAT_COLORS[item.category],
                         )}
                       >
                         {NEWS_CAT_LABELS[item.category]}
@@ -418,7 +520,10 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
               </div>
             </section>
 
-            <section aria-label="Trade history" className="flex-1 flex flex-col overflow-hidden min-w-0">
+            <section
+              aria-label="Trade history"
+              className="flex-1 flex flex-col overflow-hidden min-w-0"
+            >
               <div className="px-4 py-4 border-b border-border flex items-center justify-between shrink-0">
                 <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-muted-foreground">
                   Trade History
@@ -437,7 +542,7 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
                           className={cn(
                             "px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/80 cursor-pointer select-none whitespace-nowrap",
                             "hover:text-muted-foreground transition-colors duration-100",
-                            col.align === "right" ? "text-right" : "text-left"
+                            col.align === "right" ? "text-right" : "text-left",
                           )}
                           onClick={() => handleSort(col.key)}
                         >
@@ -453,7 +558,7 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
                         key={trade.id}
                         className={cn(
                           "border-b border-border/50 hover:bg-accent/60 transition-colors duration-75",
-                          idx % 2 === 0 ? "bg-background" : "bg-card"
+                          idx % 2 === 0 ? "bg-background" : "bg-card",
                         )}
                       >
                         <td className="px-3 py-2.5 font-mono text-[12px] tabular-nums text-foreground/70 whitespace-nowrap">
@@ -499,12 +604,16 @@ export function InsiderProfile({ insider, trades: insiderTrades, news, marketEve
 
       <footer className="h-7 border-t border-border bg-background flex items-center px-4 shrink-0">
         <div className="flex items-center gap-4 font-mono text-[10px] text-muted-foreground/80 tracking-wide w-full">
-          <span className="text-primary font-bold tracking-[0.12em]">INSIDER INSIGHTS</span>
+          <span className="text-primary font-bold tracking-[0.12em]">
+            INSIDER INSIGHTS
+          </span>
           <span className="text-muted-foreground/50">·</span>
-          <span className="text-muted-foreground/60">AI-enriched data — not investment advice</span>
+          <span className="text-muted-foreground/60">
+            AI-enriched data — not investment advice
+          </span>
           <span className="ml-auto text-muted-foreground/40">v0.2.0</span>
         </div>
       </footer>
     </div>
-  )
+  );
 }
