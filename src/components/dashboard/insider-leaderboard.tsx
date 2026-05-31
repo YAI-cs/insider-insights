@@ -21,7 +21,7 @@ export function InsiderLeaderboard({ insiders, trades, selectedInsiderId, onSele
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-background">
-      <div className="px-4 py-4 border-b border-border flex items-center justify-between">
+      <div className="h-14 px-4 border-b border-border flex items-center justify-between">
         <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-muted-foreground">
           Insiders
         </span>

@@ -69,18 +69,15 @@ export function TopBar({ typeFilter, onTypeFilterChange }: Props) {
   }
 
   return (
-    <header className="h-20 border-b border-border bg-background relative flex items-center px-6 gap-7 shrink-0">
-      <Link href="/" className="flex items-center hover:opacity-80 transition-opacity duration-100">
-        <InsiderInsightsLogo size={0.95} className="text-primary" />
-      </Link>
+    <header className="h-20 border-b border-border bg-background grid grid-cols-[auto_1fr_auto] items-center px-6 gap-6 shrink-0">
+      <div className="flex items-center gap-6">
+        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity duration-100">
+          <InsiderInsightsLogo size={0.95} className="text-primary" />
+        </Link>
 
-      <div className="h-5 w-px bg-border" />
+        <div className="h-5 w-px bg-border" />
 
-      <div className="absolute left-1/2 -translate-x-1/2 font-mono text-[18px] uppercase tracking-[0.2em] text-foreground pointer-events-none">
-        Dashboard
-      </div>
-
-      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
         {TYPES.map((t) => {
           const meta = FILTER_META[t]
           return (
@@ -116,9 +113,16 @@ export function TopBar({ typeFilter, onTypeFilterChange }: Props) {
             </Tooltip>
           )
         })}
+        </div>
       </div>
 
-      <div className="ml-auto flex items-center gap-4 text-[12px] font-mono text-muted-foreground tracking-wide">
+      <div className="flex justify-center pointer-events-none">
+        <span className="font-mono text-[18px] uppercase tracking-[0.2em] text-foreground whitespace-nowrap">
+          Dashboard
+        </span>
+      </div>
+
+      <div className="flex items-center gap-4 text-[12px] font-mono text-muted-foreground tracking-wide justify-end">
         <button
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           className="flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-foreground transition-colors duration-100"
