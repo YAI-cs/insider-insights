@@ -181,12 +181,12 @@ export function ProfileSettings() {
       {/* Nav */}
       <nav aria-label="Page navigation" className="h-20 border-b border-border relative flex items-center px-6 shrink-0">
         <div className="flex items-center gap-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity duration-100">
+          <Link href="/dashboard" className="hover:opacity-80 transition-opacity duration-100">
             <InsiderInsightsLogo size={0.95} className="text-primary" />
           </Link>
           <div className="h-5 w-px bg-border" />
           <Link
-            href="/"
+            href="/dashboard"
             className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
           >
             <span>←</span> Dashboard

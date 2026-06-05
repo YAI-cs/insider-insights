@@ -264,7 +264,7 @@ export function InsiderProfile({
       >
         <div className="flex items-center gap-4">
           <Link
-            href="/"
+            href="/dashboard"
             className="hover:opacity-80 transition-opacity duration-100"
           >
             <InsiderInsightsLogo size={0.95} className="text-primary" />

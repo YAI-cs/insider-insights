@@ -73,7 +73,7 @@ export function TopBar({ typeFilter, onTypeFilterChange, onRefresh, isRefreshing
   return (
     <header className="h-20 border-b border-border bg-background grid grid-cols-[auto_1fr_auto] items-center px-6 gap-6 shrink-0">
       <div className="flex items-center gap-6">
-        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity duration-100">
+        <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity duration-100">
           <InsiderInsightsLogo size={0.95} className="text-primary" />
         </Link>
 
