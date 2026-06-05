@@ -10,8 +10,10 @@ import {
   transformMarketEvent,
 } from "@/lib/data-pipeline"
 import { Dashboard } from "@/components/dashboard/dashboard"
+import { verifySession } from "@/lib/dal"
 
 export default async function DashboardPage() {
+  await verifySession()
   const [dbInsiders, dbTrades, dbEvents] = await Promise.all([
     prisma.insider.findMany({ orderBy: { estimatedEdge: "desc" } }).catch(() => []),
     prisma.trade.findMany({ orderBy: { date: "desc" } }).catch(() => []),

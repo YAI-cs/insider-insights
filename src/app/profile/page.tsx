@@ -1,5 +1,7 @@
 import { ProfileSettings } from "@/components/profile/profile-settings"
+import { verifySession } from "@/lib/dal"
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  await verifySession()
   return <ProfileSettings />
 }

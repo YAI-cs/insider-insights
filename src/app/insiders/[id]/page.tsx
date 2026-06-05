@@ -13,8 +13,10 @@ import {
 } from "@/lib/data-pipeline"
 import { InsiderProfile } from "@/components/insider/insider-profile"
 import { notFound } from "next/navigation"
+import { verifySession } from "@/lib/dal"
 
 export default async function InsiderPage({ params }: { params: Promise<{ id: string }> }) {
+  await verifySession()
   const { id } = await params
 
   const [dbInsider, dbTrades, dbNews, dbEvents] = await Promise.all([
